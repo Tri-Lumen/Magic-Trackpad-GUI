@@ -8,6 +8,7 @@ try {
     if (-not ($sdks -match '^(8|9|10)\.')) { throw '.NET SDK 8 or newer not found. Install it with: winget install Microsoft.DotNet.SDK.8' }
     dotnet publish "$root\src\TrackpadCompanion.csproj" -c Release -r win-x64 -o "$root\publish"
     if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed with exit code $LASTEXITCODE" }
+    & "$PSScriptRoot\prune-languages.ps1" -Path "$root\publish"
     Write-Host "BUILD OK: $root\publish\TrackpadCompanion.exe"
 }
 catch {
