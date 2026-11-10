@@ -1,0 +1,379 @@
+<title>Trackpad Companion</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one Windows 11 app window (title bar, NavigationView sidebar, content pane) above a mock taskbar with the tray icon. */
+:root{
+  --desk1:#c9d7ea; --desk2:#e8e1f0;
+  --mica:#f3f3f3; --nav:#eeeeee; --card:#ffffff; --card2:#f9f9f9; --stroke:#e3e3e3; --stroke2:#d0d0d0;
+  --fg:#1b1b1b; --fg2:#5f5f5f; --fg3:#8a8a8a;
+  --accent:#0067c0; --accent-hover:#1975c5; --accent-fg:#ffffff; --accent-soft:#dcebf8;
+  --ok:#0f7b0f; --warn:#9d5d00; --crit:#c42b1c;
+  --taskbar:rgba(243,243,243,.85); --toast:#ffffff; --shadow:0 8px 32px rgba(0,0,0,.18);
+  --font:"Segoe UI Variable Text","Segoe UI Variable","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --mono:"Cascadia Mono",Consolas,ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --desk1:#10243f; --desk2:#2a1d3d;
+  --mica:#202020; --nav:#1c1c1c; --card:#2b2b2b; --card2:#323232; --stroke:#3b3b3b; --stroke2:#4a4a4a;
+  --fg:#ffffff; --fg2:#cfcfcf; --fg3:#9a9a9a;
+  --accent:#4cc2ff; --accent-hover:#6ccbff; --accent-fg:#001a2b; --accent-soft:#1e3a4d;
+  --ok:#6ccb5f; --warn:#fce100; --crit:#ff99a4;
+  --taskbar:rgba(32,32,32,.85); --toast:#2b2b2b; --shadow:0 8px 32px rgba(0,0,0,.55); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --desk1:#10243f; --desk2:#2a1d3d;
+  --mica:#202020; --nav:#1c1c1c; --card:#2b2b2b; --card2:#323232; --stroke:#3b3b3b; --stroke2:#4a4a4a;
+  --fg:#ffffff; --fg2:#cfcfcf; --fg3:#9a9a9a;
+  --accent:#4cc2ff; --accent-hover:#6ccbff; --accent-fg:#001a2b; --accent-soft:#1e3a4d;
+  --ok:#6ccb5f; --warn:#fce100; --crit:#ff99a4;
+  --taskbar:rgba(32,32,32,.85); --toast:#2b2b2b; --shadow:0 8px 32px rgba(0,0,0,.55); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:linear-gradient(135deg,var(--desk1),var(--desk2)) fixed,var(--mica);color:var(--fg);font-family:var(--font);font-size:14px;line-height:1.4;
+  padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));min-height:100vh}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stage{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:0}
+.win{background:var(--mica);border:1px solid var(--stroke2);border-radius:8px 8px 0 0;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;min-height:640px}
+.titlebar{display:flex;align-items:center;height:32px;padding-left:12px;gap:8px;font-size:12px;flex:none}
+.titlebar .ico{width:16px;height:16px}
+.titlebar .spacer{flex:1}
+.wc{display:flex}.wc span{width:46px;height:32px;display:grid;place-items:center;color:var(--fg2)}
+.wc svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:1}
+.body{display:flex;flex:1;min-height:0}
+nav{width:240px;flex:none;padding:8px 6px;display:flex;flex-direction:column;gap:2px}
+nav .head{padding:6px 12px 10px;font-weight:600;font-size:12px;color:var(--fg2);display:none}
+.nav-item{display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border:0;background:none;border-radius:4px;cursor:pointer;text-align:left;position:relative;width:100%}
+.nav-item:hover{background:color-mix(in srgb,var(--fg) 6%,transparent)}
+.nav-item[aria-current=page]{background:color-mix(in srgb,var(--fg) 9%,transparent)}
+.nav-item[aria-current=page]::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:2px;background:var(--accent)}
+.nav-item svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.nav-foot{margin-top:auto}
+main{flex:1;min-width:0;padding:8px 24px 28px;overflow:auto;max-height:640px}
+h1{font-size:28px;font-weight:600;margin:14px 0 16px;line-height:1.15;text-wrap:balance}
+h2{font-size:14px;font-weight:600;margin:22px 0 8px}
+.page{display:none;flex-direction:column;gap:6px}.page.on{display:flex}
+.card{background:var(--card);border:1px solid var(--stroke);border-radius:4px;padding:14px 16px;display:flex;align-items:center;gap:16px;min-width:0}
+.card.col{flex-direction:column;align-items:stretch;gap:12px}
+.card .t{flex:1;min-width:0}
+.card .t b{font-weight:400;display:block}
+.card .t small{color:var(--fg2);font-size:12px;display:block}
+.ctl{display:flex;align-items:center;gap:10px;flex:none;flex-wrap:wrap;justify-content:flex-end}
+.hero{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center;padding:20px}
+.bigbat{display:flex;align-items:center;gap:14px}
+.bat{width:92px;height:44px;border:2.5px solid var(--fg2);border-radius:8px;padding:3px;position:relative;flex:none}
+.bat::after{content:"";position:absolute;right:-8px;top:13px;width:4px;height:12px;border-radius:0 3px 3px 0;background:var(--fg2)}
+.bat i{display:block;height:100%;border-radius:4px;background:var(--ok);transition:width .3s,background .3s}
+.pct{font-size:56px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-1px}
+.pct sup{font-size:22px;font-weight:400;color:var(--fg2);margin-left:2px;vertical-align:top;position:relative;top:6px}
+.status{display:flex;flex-direction:column;gap:4px;min-width:0}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:2px 9px;border-radius:10px;background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok);width:max-content;font-weight:600}
+.pill.low{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.pill.crit{background:color-mix(in srgb,var(--crit) 16%,transparent);color:var(--crit)}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.btn{height:32px;padding:0 16px;border-radius:4px;border:1px solid var(--stroke2);border-bottom-color:color-mix(in srgb,var(--stroke2) 60%,#000);background:var(--card2);cursor:pointer}
+.btn:hover{background:color-mix(in srgb,var(--fg) 6%,var(--card2))}
+.btn:active{opacity:.75}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent-hover)}
+.btn.sm{height:28px;padding:0 12px;font-size:13px}
+select,.num{height:32px;border-radius:4px;border:1px solid var(--stroke2);border-bottom:1px solid var(--fg3);background:var(--card2);padding:0 10px}
+select{min-width:120px;padding-right:6px}
+.num{width:84px;font-variant-numeric:tabular-nums}
+input[type=text]{height:32px;border-radius:4px;border:1px solid var(--stroke2);border-bottom:1px solid var(--fg3);background:var(--card2);padding:0 10px;width:100%}
+.sw{width:40px;height:20px;border-radius:10px;border:1px solid var(--fg2);background:transparent;position:relative;cursor:pointer;flex:none;padding:0}
+.sw::after{content:"";position:absolute;left:3px;top:3px;width:12px;height:12px;border-radius:50%;background:var(--fg2);transition:all .15s}
+.sw[aria-checked=true]{background:var(--accent);border-color:var(--accent)}
+.sw[aria-checked=true]::after{left:23px;background:var(--accent-fg);width:12px}
+.sw:hover::after{width:14px}.sw[aria-checked=true]:hover::after{left:21px;width:14px}
+.swl{font-size:13px;min-width:24px;color:var(--fg2)}
+.seg{display:inline-flex;border:1px solid var(--stroke2);border-radius:4px;overflow:hidden;background:var(--card2)}
+.seg button{height:30px;padding:0 18px;border:0;background:none;cursor:pointer;border-right:1px solid var(--stroke2)}
+.seg button:last-child{border-right:0}
+.seg button[aria-checked=true]{background:var(--accent);color:var(--accent-fg)}
+.radios{display:flex;flex-direction:column;gap:2px}
+.radio{display:flex;align-items:center;gap:10px;padding:6px 0;cursor:pointer;min-height:32px;flex-wrap:wrap}
+.radio input{appearance:none;width:20px;height:20px;border-radius:50%;border:1px solid var(--fg2);margin:0;display:grid;place-items:center;flex:none;cursor:pointer}
+.radio input:checked{border-color:var(--accent);background:var(--accent)}
+.radio input:checked::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent-fg);display:block}
+.radio span small{color:var(--fg2);display:block;font-size:12px}
+input[type=range]{appearance:none;width:200px;height:20px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(to right,var(--accent) var(--p,50%),var(--stroke2) var(--p,50%))}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;border-radius:50%;background:var(--card);border:1px solid var(--stroke2);margin-top:-8px;box-shadow:inset 0 0 0 5px var(--accent)}
+input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:var(--stroke2)}
+input[type=range]::-moz-range-progress{height:4px;border-radius:2px;background:var(--accent)}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);border:1px solid var(--stroke2)}
+.val{font-variant-numeric:tabular-nums;min-width:44px;text-align:right}
+.info{display:flex;gap:12px;align-items:center;padding:10px 14px;border-radius:4px;background:color-mix(in srgb,var(--ok) 14%,var(--card));border:1px solid var(--stroke)}
+.info[hidden]{display:none}
+.info b{font-weight:600}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--fg3);font-size:11px;font-family:var(--font)}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--fg2);flex-wrap:wrap}
+.legend i{display:inline-block;width:14px;height:0;border-top:2px dashed;margin-right:6px;vertical-align:middle}
+.sim{border-style:dashed;background:transparent}
+.sim .t small{font-size:12px}
+.mono{font-family:var(--mono);font-size:12px;color:var(--fg2)}
+.taskbar{height:48px;background:var(--taskbar);backdrop-filter:blur(20px);border:1px solid var(--stroke2);border-top:0;border-radius:0 0 8px 8px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:12px;color:var(--fg2)}
+.tray{display:flex;align-items:center;gap:12px}
+.trayicon{width:24px;height:24px;border-radius:5px;display:grid;place-items:center;font-weight:700;font-size:12px;color:#fff;background:var(--ok);font-variant-numeric:tabular-nums;cursor:pointer;transition:background .3s}
+.trayicon.low{background:#b86e00}.trayicon.crit{background:#c42b1c}
+.clock{text-align:right;line-height:1.2;font-size:11px}
+.taskleft{display:flex;gap:8px}.taskleft i{width:24px;height:24px;border-radius:6px;background:color-mix(in srgb,var(--fg) 14%,transparent)}
+.toast{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(24px + 56px);width:min(364px,calc(100vw - 32px));background:var(--toast);border:1px solid var(--stroke2);border-radius:8px;box-shadow:var(--shadow);padding:14px;display:grid;grid-template-columns:24px 1fr auto;gap:4px 12px;z-index:20;transform:translateY(20px);opacity:0;pointer-events:none;transition:all .25s}
+.toast.show{transform:none;opacity:1;pointer-events:auto}
+.toast .appname{grid-column:2;font-size:12px;color:var(--fg2)}
+.toast .x{grid-row:1;grid-column:3;border:0;background:none;color:var(--fg2);cursor:pointer;font-size:16px;line-height:1}
+.toast .ti{grid-row:1/4;width:24px;height:24px}
+.toast .tt{grid-column:2/4;font-weight:600}
+.toast .tb{grid-column:2/4;color:var(--fg2)}
+.toast .acts{grid-column:1/4;display:flex;gap:8px;margin-top:8px}.toast .acts .btn{flex:1}
+@media (max-width:760px){
+  nav{width:auto;flex-direction:row;overflow:auto;padding:4px 8px;border-bottom:1px solid var(--stroke)}
+  .body{flex-direction:column}
+  .nav-item{width:auto;padding:0 12px;flex:none}.nav-foot{margin:0}
+  main{padding:4px 14px 24px;max-height:none}
+  .hero{grid-template-columns:1fr}
+  .card{flex-wrap:wrap}.ctl{justify-content:flex-start}
+  input[type=range]{width:150px}
+  .win{min-height:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="stage">
+  <div class="win" role="application" aria-label="Trackpad Companion">
+    <div class="titlebar">
+      <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="var(--accent)" stroke-width="1.4"><rect x="1.5" y="3" width="13" height="10" rx="2"/><path d="M5 13v1M11 13v1"/></svg>
+      <span>Trackpad Companion</span><span class="spacer"></span>
+      <div class="wc"><span><svg viewBox="0 0 10 10"><path d="M0 5h10"/></svg></span><span><svg viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9"/></svg></span><span><svg viewBox="0 0 10 10"><path d="M0 0l10 10M10 0L0 10"/></svg></span></div>
+    </div>
+    <div class="body">
+      <nav aria-label="Sections">
+        <button class="nav-item" data-page="battery" aria-current="page"><svg viewBox="0 0 16 16"><rect x="1" y="4.5" width="12" height="7" rx="1.5"/><path d="M14.5 7v2M3.5 7v2"/></svg>Battery</button>
+        <button class="nav-item" data-page="trackpad"><svg viewBox="0 0 16 16"><rect x="2" y="2.5" width="12" height="11" rx="2"/><path d="M2 10h12"/></svg>Trackpad</button>
+        <button class="nav-item" data-page="notify"><svg viewBox="0 0 16 16"><path d="M8 2a4 4 0 0 0-4 4v2.5L2.5 11h11L12 8.5V6a4 4 0 0 0-4-4zM6.5 13a1.5 1.5 0 0 0 3 0"/></svg>Notifications</button>
+        <div class="nav-foot">
+          <button class="nav-item" data-page="app"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 7.5V11M8 5v.5"/></svg>App settings</button>
+        </div>
+      </nav>
+
+      <main>
+        <!-- BATTERY -->
+        <section class="page on" id="p-battery">
+          <h1>Battery</h1>
+          <div class="card hero">
+            <div class="bigbat">
+              <div class="bat" aria-hidden="true"><i id="batFill"></i></div>
+              <div class="pct"><span id="pctNum">64</span><sup>%</sup></div>
+            </div>
+            <div class="status">
+              <span class="pill" id="pill">Good</span>
+              <span id="est" style="font-size:16px">About 9 days remaining</span>
+              <small style="color:var(--fg2)" id="upd">Magic Trackpad · Bluetooth · updated just now</small>
+            </div>
+          </div>
+          <div class="card">
+            <div class="t"><b>Check battery</b><small>The trackpad reports its level over Bluetooth only.</small></div>
+            <div class="ctl"><button class="btn primary" id="checkNow">Check now</button></div>
+          </div>
+          <div class="card">
+            <div class="t"><b>Check automatically</b><small>Runs in the background so alerts arrive without opening this window.</small></div>
+            <div class="ctl"><select id="interval" aria-label="Check interval"><option>Every minute</option><option>Every 5 minutes</option><option selected>Every 15 minutes</option><option>Every hour</option></select></div>
+          </div>
+          <h2>Last 7 days</h2>
+          <div class="card col">
+            <svg class="chart" id="chart" viewBox="0 0 640 200" role="img" aria-label="Battery level over the last seven days"></svg>
+            <div class="legend"><span><i style="color:var(--warn)"></i>Low alert <b id="lgLow">20%</b></span><span><i style="color:var(--crit)"></i>Critical alert <b id="lgCrit">10%</b></span></div>
+          </div>
+          <h2>Try it</h2>
+          <div class="card sim">
+            <div class="t"><b>Simulate battery level</b><small>Preview only. Drag below your alert levels to see the toast and tray icon react.</small></div>
+            <div class="ctl"><input type="range" id="sim" min="1" max="100" value="64" aria-label="Simulated battery level"><span class="val" id="simVal">64%</span></div>
+          </div>
+        </section>
+
+        <!-- TRACKPAD -->
+        <section class="page" id="p-trackpad">
+          <h1>Trackpad</h1>
+          <div class="card">
+            <div class="t"><b>Preset</b><small>Save the current settings under a name and switch in one click from the tray.</small></div>
+            <div class="ctl"><select id="preset" aria-label="Preset"><option>Default</option><option>Quiet office</option><option>Drawing</option></select><button class="btn sm" id="savePreset">Save as…</button></div>
+          </div>
+          <h2>Click feedback</h2>
+          <div class="card">
+            <div class="t"><b>Click strength</b><small>How firm the haptic click feels.</small></div>
+            <div class="ctl"><div class="seg" role="radiogroup" aria-label="Click strength" id="strength"><button role="radio" aria-checked="false">Light</button><button role="radio" aria-checked="true">Medium</button><button role="radio" aria-checked="false">Firm</button></div></div>
+          </div>
+          <div class="card">
+            <div class="t"><b>Silent clicking</b><small>Removes the click sound from the haptic motor.</small></div>
+            <div class="ctl"><span class="swl">Off</span><button class="sw" role="switch" aria-checked="false" aria-label="Silent clicking"></button></div>
+          </div>
+          <div class="card col">
+            <div class="radios" role="radiogroup" aria-label="Haptic mode">
+              <label class="radio"><input type="radio" name="mode" checked><span>Use macOS click options<small>Light, medium or firm as chosen above.</small></span></label>
+              <label class="radio"><input type="radio" name="mode"><span>Maximum haptic feedback<small>Very clicky and loud.</small></span></label>
+              <label class="radio"><input type="radio" name="mode"><span>Disable haptics and the force touch button<small>Tap to click only.</small></span></label>
+            </div>
+          </div>
+          <h2>When you lift your finger</h2>
+          <div class="card col">
+            <div class="radios" role="radiogroup" aria-label="Pointer stop">
+              <label class="radio"><input type="radio" name="stop" checked><span>Do nothing</span></label>
+              <label class="radio"><input type="radio" name="stop" id="stopSize"><span>Stop the pointer if touch size is at or below</span><input class="num" type="number" min="0" value="7" aria-label="Touch size units"><span style="color:var(--fg2)">units</span></label>
+              <label class="radio"><input type="radio" name="stop"><span>Stop the pointer if pressure is at or below</span><input class="num" type="number" min="0" value="0" aria-label="Pressure units"><span style="color:var(--fg2)">units</span></label>
+            </div>
+          </div>
+          <h2>Other</h2>
+          <div class="card"><div class="t"><b>Palm rejection</b></div><div class="ctl"><span class="swl">On</span><button class="sw" role="switch" aria-checked="true" aria-label="Palm rejection"></button></div></div>
+          <div class="card"><div class="t"><b>Ignore the finger that presses the button</b><small>Helps when you click with your thumb and drag with your index finger.</small></div><div class="ctl"><span class="swl">On</span><button class="sw" role="switch" aria-checked="true" aria-label="Ignore button finger"></button></div></div>
+          <div class="card"><div class="t"><b>Ignore fingers hovering near the surface</b></div><div class="ctl"><span class="swl">On</span><button class="sw" role="switch" aria-checked="true" aria-label="Ignore near fingers"></button></div></div>
+          <div class="info" id="applied" hidden><svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="var(--ok)" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M5 8.2l2 2 4-4.4"/></svg><div><b>Settings applied.</b> The trackpad driver restarted and reloaded them.</div></div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn primary" id="apply">Apply</button><button class="btn" id="revert">Revert</button><button class="btn" id="winTp">Windows touchpad settings</button></div>
+        </section>
+
+        <!-- NOTIFICATIONS -->
+        <section class="page" id="p-notify">
+          <h1>Notifications</h1>
+          <div class="card"><div class="t"><b>Battery alerts</b><small>Show a Windows notification when the trackpad runs low.</small></div><div class="ctl"><span class="swl">On</span><button class="sw" role="switch" aria-checked="true" aria-label="Battery alerts" id="notifOn"></button></div></div>
+          <div class="card"><div class="t"><b>Low battery at</b><small>First warning.</small></div><div class="ctl"><input type="range" id="lowR" min="5" max="50" value="20" aria-label="Low battery level"><span class="val" id="lowV">20%</span></div></div>
+          <div class="card"><div class="t"><b>Critical battery at</b><small>Urgent warning that stays on screen longer.</small></div><div class="ctl"><input type="range" id="critR" min="1" max="25" value="10" aria-label="Critical battery level"><span class="val" id="critV">10%</span></div></div>
+          <div class="card"><div class="t"><b>Remind me again</b><small>Repeats while the level stays below the low threshold.</small></div><div class="ctl"><select id="repeat" aria-label="Repeat"><option>Never</option><option>Every 15 minutes</option><option selected>Every hour</option><option>Every 3 hours</option></select></div></div>
+          <div class="card"><div class="t"><b>Tell me if it disconnects</b><small>Notify when the trackpad stops responding to battery checks.</small></div><div class="ctl"><span class="swl">Off</span><button class="sw" role="switch" aria-checked="false" aria-label="Disconnect alert"></button></div></div>
+          <div class="card"><div class="t"><b>Play a sound</b></div><div class="ctl"><span class="swl">On</span><button class="sw" role="switch" aria-checked="true" aria-label="Play sound"></button></div></div>
+          <h2>Message</h2>
+          <div class="card col">
+            <label>Low battery<input type="text" id="msgLow" value="Your Magic Trackpad is at {level}%. Plug it in soon."></label>
+            <label>Critical battery<input type="text" id="msgCrit" value="Only {level}% left on your Magic Trackpad. Charge it now."></label>
+            <small class="mono">{level} is replaced with the current percentage.</small>
+            <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="testLow">Preview low alert</button><button class="btn" id="testCrit">Preview critical alert</button></div>
+          </div>
+        </section>
+
+        <!-- APP -->
+        <section class="page" id="p-app">
+          <h1>App settings</h1>
+          <div class="card"><div class="t"><b>Start with Windows</b><small>Runs in the tray at sign-in without a UAC prompt.</small></div><div class="ctl"><span class="swl">On</span><button class="sw" role="switch" aria-checked="true" aria-label="Start with Windows"></button></div></div>
+          <div class="card"><div class="t"><b>Keep running in the tray when closed</b></div><div class="ctl"><span class="swl">On</span><button class="sw" role="switch" aria-checked="true" aria-label="Run in tray"></button></div></div>
+          <div class="card"><div class="t"><b>Tray icon shows</b><small>Percentage as a number on a colored badge.</small></div><div class="ctl"><select aria-label="Tray icon style"><option selected>Percentage</option><option>Battery glyph</option></select></div></div>
+          <div class="card"><div class="t"><b>Driver</b><small class="mono">AmtPtpHidFilter · control device \\.\AmtPtpControlDeviceUm</small></div><div class="ctl"><span class="pill">Connected</span></div></div>
+          <div class="card"><div class="t"><b>Theme</b><small>Follows Windows.</small></div></div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div class="taskbar">
+    <div class="taskleft"><i></i><i></i><i></i><i></i></div>
+    <div class="tray"><div class="trayicon" id="tray" title="Magic Trackpad 64%" tabindex="0" role="button" aria-label="Magic Trackpad battery">64</div><div class="clock">9:41 AM<br>11/8/2026</div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <svg class="ti" viewBox="0 0 16 16" fill="none" stroke="var(--accent)" stroke-width="1.4"><rect x="1.5" y="3" width="13" height="10" rx="2"/><path d="M5 13v1M11 13v1"/></svg>
+  <span class="appname">Trackpad Companion</span><button class="x" id="toastX" aria-label="Dismiss">×</button>
+  <div class="tt" id="toastT"></div><div class="tb" id="toastB"></div>
+  <div class="acts"><button class="btn" id="toastOpen">Open</button><button class="btn" id="toastSnooze">Remind me later</button></div>
+</div>
+
+<script>
+(function(){
+  var $=function(s,r){return (r||document).querySelector(s)}, $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+  var st={level:64,low:20,crit:10,notify:true,firedLow:false,firedCrit:false,timer:null};
+
+  // navigation
+  $$('.nav-item').forEach(function(b){b.addEventListener('click',function(){
+    $$('.nav-item').forEach(function(x){x.removeAttribute('aria-current')});b.setAttribute('aria-current','page');
+    $$('.page').forEach(function(p){p.classList.toggle('on',p.id==='p-'+b.dataset.page)});
+  })});
+
+  // switches (label text follows state)
+  $$('.sw').forEach(function(s){s.addEventListener('click',function(){
+    var on=s.getAttribute('aria-checked')!=='true';s.setAttribute('aria-checked',on);
+    var l=s.previousElementSibling;if(l&&l.classList.contains('swl'))l.textContent=on?'On':'Off';
+    if(s.id==='notifOn')st.notify=on;
+  })});
+
+  // segmented
+  $$('.seg').forEach(function(g){g.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+    $$('button',g).forEach(function(x){x.setAttribute('aria-checked',x===b)})})});
+
+  // ranges
+  function paintRange(r){r.style.setProperty('--p',((r.value-r.min)/(r.max-r.min)*100)+'%')}
+  $$('input[type=range]').forEach(function(r){paintRange(r);r.addEventListener('input',function(){paintRange(r)})});
+
+  var lowR=$('#lowR'),critR=$('#critR');
+  lowR.addEventListener('input',function(){st.low=+lowR.value;if(+critR.value>=st.low){critR.value=Math.max(1,st.low-1);paintRange(critR);st.crit=+critR.value}sync()});
+  critR.addEventListener('input',function(){st.crit=+critR.value;if(st.crit>=st.low){lowR.value=Math.min(50,st.crit+1);paintRange(lowR);st.low=+lowR.value}sync()});
+  $('#sim').addEventListener('input',function(e){setLevel(+e.target.value,true)});
+
+  function sync(){
+    $('#lowV').textContent=st.low+'%';$('#critV').textContent=st.crit+'%';
+    $('#lgLow').textContent=st.low+'%';$('#lgCrit').textContent=st.crit+'%';
+    critR.max=Math.max(1,st.low-1);paintRange(critR);drawChart();
+  }
+
+  function state(l){return l<=st.crit?'crit':(l<=st.low?'low':'')}
+  function setLevel(l,fire){
+    var prev=st.level;st.level=l;
+    var s=state(l),col=s==='crit'?'var(--crit)':s==='low'?'var(--warn)':'var(--ok)';
+    $('#pctNum').textContent=l;$('#batFill').style.width=l+'%';$('#batFill').style.background=col;
+    var p=$('#pill');p.className='pill '+s;p.textContent=s==='crit'?'Critical':s==='low'?'Low':'Good';
+    var t=$('#tray');t.className='trayicon '+s;t.textContent=l;t.title='Magic Trackpad '+l+'%';
+    $('#simVal').textContent=l+'%';$('#sim').value=l;paintRange($('#sim'));
+    var days=l/7;$('#est').textContent=l<=st.crit?'Less than a day remaining':days<1.5?'About 1 day remaining':'About '+Math.round(days)+' days remaining';
+    if(l>st.low+4){st.firedLow=false;st.firedCrit=false}
+    if(fire&&st.notify){
+      if(l<=st.crit&&!st.firedCrit){st.firedCrit=true;st.firedLow=true;toast('crit')}
+      else if(l<=st.low&&l>st.crit&&!st.firedLow&&prev>st.low){st.firedLow=true;toast('low')}
+    }
+    drawChart();
+  }
+
+  function msg(k){return $(k==='crit'?'#msgCrit':'#msgLow').value.replace(/\{level\}/g,st.level)}
+  function toast(k){
+    var lvl=st.level;if(k==='crit'&&lvl>st.crit)lvl=st.crit;if(k==='low'&&lvl>st.low)lvl=st.low;
+    var keep=st.level;st.level=lvl;var body=msg(k);st.level=keep;
+    $('#toastT').textContent=k==='crit'?'Trackpad battery critical':'Trackpad battery low';
+    $('#toastB').textContent=body;$('#toast').classList.add('show');
+    clearTimeout(st.timer);st.timer=setTimeout(hide,k==='crit'?12000:6000);
+  }
+  function hide(){$('#toast').classList.remove('show')}
+  $('#toastX').onclick=hide;$('#toastSnooze').onclick=hide;
+  $('#toastOpen').onclick=function(){hide();$('.nav-item[data-page=battery]').click()};
+  $('#testLow').onclick=function(){toast('low')};$('#testCrit').onclick=function(){toast('crit')};
+  $('#tray').onclick=function(){$('.nav-item[data-page=battery]').click()};
+
+  $('#checkNow').onclick=function(){var b=this;b.textContent='Checking…';setTimeout(function(){b.textContent='Check now';$('#upd').textContent='Magic Trackpad · Bluetooth · updated just now'},600)};
+
+  // apply / revert
+  var ap=$('#applied');
+  $('#apply').onclick=function(){var b=this;b.textContent='Applying…';ap.hidden=true;setTimeout(function(){b.textContent='Apply';ap.hidden=false;clearTimeout(ap._t);ap._t=setTimeout(function(){ap.hidden=true},4000)},900)};
+  $('#revert').onclick=function(){ap.hidden=true};
+  $('#savePreset').onclick=function(){var n='Preset '+($('#preset').options.length);var o=new Option(n,n,true,true);$('#preset').add(o)};
+
+  // 7-day history: slow drain with two recharges, ends at the live level
+  function series(){
+    var pts=[],v=96,i;for(i=0;i<=84;i++){
+      if(i===30)v=Math.min(100,v+58);if(i===62)v=Math.min(100,v+52);
+      v-=0.55+((i*7)%5)*0.06;pts.push(Math.max(3,v));
+    }
+    var last=pts[pts.length-1],d=st.level-last;
+    return pts.map(function(p,k){return Math.max(1,Math.min(100,p+d*(k/(pts.length-1))))});
+  }
+  function drawChart(){
+    var W=640,H=200,L=34,R=10,T=10,B=24,pw=W-L-R,ph=H-T-B,pts=series();
+    function X(i){return L+i/(pts.length-1)*pw}function Y(v){return T+(1-v/100)*ph}
+    var s='';
+    [0,25,50,75,100].forEach(function(g){s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(g)+'" y2="'+Y(g)+'" stroke="var(--stroke)" stroke-width="1"/><text x="'+(L-6)+'" y="'+(Y(g)+4)+'" text-anchor="end">'+g+'</text>'});
+    ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(function(d,k){s+='<text x="'+(L+(k+.5)/7*pw)+'" y="'+(H-6)+'" text-anchor="middle">'+d+'</text>'});
+    s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(st.low)+'" y2="'+Y(st.low)+'" stroke="var(--warn)" stroke-dasharray="4 4"/>';
+    s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(st.crit)+'" y2="'+Y(st.crit)+'" stroke="var(--crit)" stroke-dasharray="4 4"/>';
+    var line=pts.map(function(v,i){return (i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)}).join(' ');
+    s+='<path d="'+line+' L'+X(pts.length-1)+' '+Y(0)+' L'+X(0)+' '+Y(0)+'Z" fill="var(--accent)" opacity=".14"/>';
+    s+='<path d="'+line+'" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>';
+    var e=pts.length-1;s+='<circle cx="'+X(e)+'" cy="'+Y(pts[e])+'" r="4.5" fill="var(--accent)" stroke="var(--card)" stroke-width="2"/>';
+    $('#chart').innerHTML=s;
+  }
+  $('#winTp').onclick=function(){this.textContent='Opens Windows Settings in the real app';var b=this;setTimeout(function(){b.textContent='Windows touchpad settings'},1800)};
+  sync();setLevel(64,false);
+})();
+</script>
