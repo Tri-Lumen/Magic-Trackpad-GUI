@@ -35,10 +35,10 @@ public sealed class MainWindow : Window
             OpenPaneLength = 260,
             Content = host
         };
-        nav.MenuItems.Add(Item("Battery", "battery", ""));
-        nav.MenuItems.Add(Item("Trackpad", "trackpad", ""));
-        nav.MenuItems.Add(Item("Notifications", "notify", ""));
-        nav.FooterMenuItems.Add(Item("App settings", "app", ""));
+        nav.MenuItems.Add(Item(Loc.T("nav.battery"), "battery", ""));
+        nav.MenuItems.Add(Item(Loc.T("nav.trackpad"), "trackpad", ""));
+        nav.MenuItems.Add(Item(Loc.T("nav.notifications"), "notify", ""));
+        nav.FooterMenuItems.Add(Item(Loc.T("nav.app"), "app", ""));
         nav.SelectionChanged += (_, e) =>
         {
             var tag = (e.SelectedItem as NavigationViewItem)?.Tag as string;

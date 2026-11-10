@@ -78,7 +78,7 @@ public sealed class TrayIcon : IDisposable
         d.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
         d.uCallbackMessage = WM_APP_TRAY;
         d.hIcon = hIcon;
-        d.szTip = l < 0 ? "Magic Trackpad: battery unavailable" : "Magic Trackpad: " + l + "%";
+        d.szTip = l < 0 ? Loc.T("tray.tip.na") : Loc.F("tray.tip", l);
         Shell_NotifyIconW(added ? NIM_MODIFY : NIM_ADD, ref d);
         added = true;
         if (old != IntPtr.Zero) DestroyIcon(old);
@@ -139,17 +139,17 @@ public sealed class TrayIcon : IDisposable
     void ShowMenu()
     {
         var menu = CreatePopupMenu();
-        AppendMenuW(menu, MF_STRING, (UIntPtr)ID_OPEN, "Open Trackpad Companion");
-        AppendMenuW(menu, MF_STRING, (UIntPtr)ID_CHECK, "Check battery now");
-        AppendMenuW(menu, MF_STRING | (App.Paused ? MF_CHECKED : 0), (UIntPtr)ID_PAUSE, "Pause battery alerts");
+        AppendMenuW(menu, MF_STRING, (UIntPtr)ID_OPEN, Loc.T("tray.open"));
+        AppendMenuW(menu, MF_STRING, (UIntPtr)ID_CHECK, Loc.T("tray.check"));
+        AppendMenuW(menu, MF_STRING | (App.Paused ? MF_CHECKED : 0), (UIntPtr)ID_PAUSE, Loc.T("tray.pause"));
         var presets = App.Cfg.Presets;
         if (presets.Count > 0)
         {
             AppendMenuW(menu, MF_SEPARATOR, UIntPtr.Zero, null);
-            for (int i = 0; i < presets.Count; i++) AppendMenuW(menu, MF_STRING, (UIntPtr)(ID_PRESET + i), "Preset: " + presets[i].Name);
+            for (int i = 0; i < presets.Count; i++) AppendMenuW(menu, MF_STRING, (UIntPtr)(ID_PRESET + i), Loc.F("tray.preset", presets[i].Name));
         }
         AppendMenuW(menu, MF_SEPARATOR, UIntPtr.Zero, null);
-        AppendMenuW(menu, MF_STRING, (UIntPtr)ID_EXIT, "Exit");
+        AppendMenuW(menu, MF_STRING, (UIntPtr)ID_EXIT, Loc.T("tray.exit"));
         GetCursorPos(out var p);
         SetForegroundWindow(hwnd);
         int cmd = TrackPopupMenuEx(menu, 0x100 | 0x2, p.X, p.Y, hwnd, IntPtr.Zero);
@@ -164,8 +164,8 @@ public sealed class TrayIcon : IDisposable
             else if (cmd == ID_EXIT) App.Quit();
             else if (cmd >= ID_PRESET && cmd - ID_PRESET < presets.Count)
             {
-                try { await presets[cmd - ID_PRESET].Model.ApplyAsync(); Notify("Preset applied", presets[cmd - ID_PRESET].Name, false); }
-                catch (Exception e) { Notify("Could not apply preset", e.Message, true); }
+                try { await presets[cmd - ID_PRESET].Model.ApplyAsync(); Notify(Loc.T("tray.preset.applied"), presets[cmd - ID_PRESET].Name, false); }
+                catch (Exception e) { Notify(Loc.T("tray.preset.failed"), e.Message, true); }
             }
         });
     }

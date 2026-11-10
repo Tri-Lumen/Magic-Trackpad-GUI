@@ -26,3 +26,12 @@ remove them before installing the driver above.
 | [Windows App SDK](https://github.com/microsoft/WindowsAppSDK) | MIT |
 | System.Drawing.Common | MIT |
 | [Inno Setup](https://jrsoftware.org/isinfo.php) (installer build only) | Inno Setup License |
+
+## Installer translations
+
+`installer/languages/` holds two user-contributed Inno Setup message files, shipped unmodified so the installer can show Afrikaans and Simplified Chinese:
+
+- `Afrikaans.isl` by Leon Odendaal, from the [Inno Setup source tree](https://github.com/jrsoftware/issrc/tree/main/Files/Languages/Unofficial)
+- `ChineseSimplified.isl` by Zhenghan Yang (Kira), from [kira-96/Inno-Setup-Chinese-Simplified-Translation](https://github.com/kira-96/Inno-Setup-Chinese-Simplified-Translation)
+
+Inno Setup's other translations (French, German, Spanish, Japanese, Polish, Russian, Brazilian Portuguese) come with Inno Setup itself.

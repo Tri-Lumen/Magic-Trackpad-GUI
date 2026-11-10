@@ -23,13 +23,13 @@ public sealed class BatteryPage : Page
     readonly int _s5 = Log.Step("BatteryPage field 5");
     readonly Canvas chart = new() { Height = 220 };
     readonly int _s6 = Log.Step("BatteryPage field 6");
-    readonly Button checkBtn = new() { Content = "Check now", Style = Ui.S("AccentButtonStyle") };
+    readonly Button checkBtn = new() { Content = Loc.T("battery.check.btn"), Style = Ui.S("AccentButtonStyle") };
     readonly int _s7 = Log.Step("BatteryPage field 7");
 
     public BatteryPage()
     {
         Log.Write("BatteryPage: ctor start");
-        var page = Ui.NewPage("Battery", out var root);
+        var page = Ui.NewPage(Loc.T("nav.battery"), out var root);
         Content = page;
 
         var hero = new Grid { ColumnSpacing = 24 };
@@ -47,15 +47,15 @@ public sealed class BatteryPage : Page
 
         checkBtn.Click += async (_, _) =>
         {
-            checkBtn.IsEnabled = false; checkBtn.Content = "Checking…";
+            checkBtn.IsEnabled = false; checkBtn.Content = Loc.T("battery.check.busy");
             await App.Monitor.CheckAsync();
-            checkBtn.Content = "Check now"; checkBtn.IsEnabled = true;
+            checkBtn.Content = Loc.T("battery.check.btn"); checkBtn.IsEnabled = true;
         };
-        root.Children.Add(Ui.Card("Check battery", "The trackpad reports its level over Bluetooth only.", checkBtn));
+        root.Children.Add(Ui.Card(Loc.T("battery.check.title"), Loc.T("battery.check.desc"), checkBtn));
 
         var interval = new ComboBox { MinWidth = 180 };
         int[] mins = { 1, 5, 15, 60 };
-        string[] names = { "Every minute", "Every 5 minutes", "Every 15 minutes", "Every hour" };
+        string[] names = { Loc.T("battery.every1"), Loc.T("battery.every5"), Loc.T("battery.every15"), Loc.T("battery.every60") };
         foreach (var n in names) interval.Items.Add(n);
         interval.SelectedIndex = Math.Max(0, Array.IndexOf(mins, App.Cfg.IntervalMinutes));
         interval.SelectionChanged += (_, _) =>
@@ -63,9 +63,9 @@ public sealed class BatteryPage : Page
             App.Cfg.IntervalMinutes = mins[Math.Max(0, interval.SelectedIndex)];
             App.Cfg.Save(); App.Monitor.ApplyInterval();
         };
-        root.Children.Add(Ui.Card("Check automatically", "Runs in the background so alerts arrive without opening this window.", interval));
+        root.Children.Add(Ui.Card(Loc.T("battery.auto.title"), Loc.T("battery.auto.desc"), interval));
 
-        root.Children.Add(Ui.Header("Last 7 days"));
+        root.Children.Add(Ui.Header(Loc.T("battery.last7")));
         var chartCard = Ui.CardWith(chart);
         root.Children.Add(chartCard);
         chart.SizeChanged += (_, _) => DrawChart();
@@ -92,22 +92,24 @@ public sealed class BatteryPage : Page
         if (l < 0)
         {
             pct.Text = "--";
-            pillText.Text = "Unavailable";
-            est.Text = "Battery can only be read over Bluetooth";
+            pillText.Text = Loc.T("battery.unavailable");
+            est.Text = Loc.T("battery.btonly");
             glyph.Glyph = "\uE83F";
         }
         else
         {
             pct.Text = l + "%";
-            pillText.Text = l <= App.Cfg.Critical ? "Critical" : l <= App.Cfg.Low ? "Low" : "Good";
+            pillText.Text = l <= App.Cfg.Critical ? Loc.T("battery.critical") : l <= App.Cfg.Low ? Loc.T("battery.low") : Loc.T("battery.good");
             glyph.Glyph = l >= 95 ? "" : l >= 10 ? (char)(0xEBA0 + Math.Min(9, l / 10)) + "" : "";
             var d = History.EstimateDaysLeft(l);
-            est.Text = d == null ? "Estimate appears after a few hours of readings"
-                : d < 1 ? "About " + Math.Max(1, (int)Math.Round(d.Value * 24)) + " hours remaining"
-                : "About " + (int)Math.Round(d.Value) + " days remaining";
+            int hrs = d == null ? 0 : Math.Max(1, (int)Math.Round(d.Value * 24));
+            int days = d == null ? 0 : (int)Math.Round(d.Value);
+            est.Text = d == null ? Loc.T("battery.est.none")
+                : d < 1 ? (hrs == 1 ? Loc.T("battery.est.hour1") : Loc.F("battery.est.hours", hrs))
+                : (days <= 1 ? Loc.T("battery.est.day1") : Loc.F("battery.est.days", days));
         }
-        updated.Text = App.Monitor.Updated == null ? "Waiting for the first reading"
-            : "Magic Trackpad · updated " + App.Monitor.Updated.Value.ToString("t");
+        updated.Text = App.Monitor.Updated == null ? Loc.T("battery.waiting")
+            : Loc.F("battery.updated", App.Monitor.Updated.Value.ToString("t", Loc.Culture));
         DrawChart();
     }
 
@@ -129,7 +131,7 @@ public sealed class BatteryPage : Page
         for (int d = 0; d < 7; d++)
         {
             var day = start.AddDays(d + 1).ToLocalTime();
-            var t = new TextBlock { Text = day.ToString("ddd"), Style = Ui.S("CaptionText"), FontSize = 11 };
+            var t = new TextBlock { Text = day.ToString("ddd", Loc.Culture), Style = Ui.S("CaptionText"), FontSize = 11 };
             Canvas.SetLeft(t, L + (d + 0.5) / 7 * pw - 12); Canvas.SetTop(t, h - B + 4); chart.Children.Add(t);
         }
         void Threshold(int v, Color c) => chart.Children.Add(new Line
@@ -143,7 +145,7 @@ public sealed class BatteryPage : Page
         var pts = History.Load(7);
         if (pts.Count == 0)
         {
-            var t = new TextBlock { Text = "History fills in as the app records readings.", Style = Ui.S("CaptionText") };
+            var t = new TextBlock { Text = Loc.T("battery.history.empty"), Style = Ui.S("CaptionText") };
             Canvas.SetLeft(t, L + 12); Canvas.SetTop(t, T + 12); chart.Children.Add(t);
             return;
         }

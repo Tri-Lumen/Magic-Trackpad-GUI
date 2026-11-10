@@ -27,6 +27,10 @@ jobs:
           if ($env:GITHUB_REF -like 'refs/tags/v*') { $v = $env:GITHUB_REF_NAME.TrimStart('v') } else { $v = '0.0.0-dev' }
           "version=$v" >> $env:GITHUB_OUTPUT
 
+      - name: Check translations
+        shell: pwsh
+        run: ./scripts/check-translations.ps1
+
       - name: Publish the app
         run: dotnet publish src/TrackpadCompanion.csproj -c Release -r win-x64 -o publish
 

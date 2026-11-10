@@ -101,7 +101,7 @@ public class BatteryMonitor
             if (wasReadable && fails >= 3 && cfg.DisconnectAlert && !discNotified)
             {
                 discNotified = true;
-                App.Tray.Notify("Trackpad not responding", "Battery checks failed three times. The trackpad may be off or disconnected.", false);
+                App.Tray.Notify(Loc.T("mon.disc.title"), Loc.T("mon.disc.text"), false);
             }
         }
         else
@@ -126,8 +126,8 @@ public class BatteryMonitor
     {
         int l = levelOverride ?? Level;
         var cfg = App.Cfg;
-        var text = (critical ? cfg.MsgCritical : cfg.MsgLow).Replace("{level}", l.ToString());
+        var text = (critical ? cfg.CriticalText() : cfg.LowText()).Replace("{level}", l.ToString());
         lastRemind = DateTime.Now;
-        App.Tray.Notify(critical ? "Trackpad battery critical" : "Trackpad battery low", text, critical);
+        App.Tray.Notify(critical ? Loc.T("mon.title.crit") : Loc.T("mon.title.low"), text, critical);
     }
 }

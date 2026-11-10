@@ -20,6 +20,9 @@
     <NoWarn>$(NoWarn);CS8618;CS8600;CS8601;CS8602;CS8603;CS8604;CS8625;CA1416;CS0649;CS0169</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Lang\*.json" LogicalName="Lang.%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.250108002" />
     <PackageReference Include="System.Drawing.Common" Version="8.0.10" />
   </ItemGroup>

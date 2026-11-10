@@ -82,10 +82,15 @@ public class Config
     public int RepeatMinutes { get; set; } = 60;
     public bool DisconnectAlert { get; set; }
     public bool Sound { get; set; } = true;
-    public string MsgLow { get; set; } = "Your Magic Trackpad is at {level}%. Plug it in soon.";
-    public string MsgCritical { get; set; } = "Only {level}% left on your Magic Trackpad. Charge it now.";
+    // Empty means "use the default text in the current language".
+    public string MsgLow { get; set; } = "";
+    public string MsgCritical { get; set; } = "";
+    public string Language { get; set; } = "auto";
     public bool RunInTray { get; set; } = true;
     public List<Preset> Presets { get; set; } = new();
+
+    public string LowText() => string.IsNullOrEmpty(MsgLow) || MsgLow == Loc.En("msg.low") ? Loc.T("msg.low") : MsgLow;
+    public string CriticalText() => string.IsNullOrEmpty(MsgCritical) || MsgCritical == Loc.En("msg.crit") ? Loc.T("msg.crit") : MsgCritical;
 
     public static string Dir => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "TrackpadCompanion");
     static string FilePath => Path.Combine(Dir, "config.json");

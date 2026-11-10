@@ -9,12 +9,32 @@ A Windows 11 settings app and tray monitor for the Apple Magic Trackpad (includi
 
 > **Status: early version.** The app builds and starts, but it has had little testing on real hardware. Expect rough edges and please open an issue with `%APPDATA%\TrackpadCompanion\app.log` attached if something breaks.
 
-A design mockup with sample data is in [`docs/ui-mockup.html`](docs/ui-mockup.html). Download it and open it in a browser.
+## About
+
+Trackpad Companion is a front end for the [Magic Trackpad 2 for Windows](https://github.com/vitoplantamura/MagicTrackpad2ForWindows) driver by Vito Plantamura, which is itself a fork of [imbushuo/mac-precision-touchpad](https://github.com/imbushuo/mac-precision-touchpad). The driver is what makes the trackpad work as a precision touchpad. This app replaces that project's control panel with a modern window, a battery tray icon and alerts. It does not contain the driver. The installer downloads it from the driver's own release page.
+
+## Screenshots
+
+These are from the design mockup ([`docs/ui-mockup.html`](docs/ui-mockup.html)) with sample data. They show the intended look. The real app is built with WinUI 3 and may differ in detail.
+
+| Battery | Trackpad |
+| --- | --- |
+| ![Battery page](docs/screenshots/battery-light.png) | ![Trackpad page](docs/screenshots/trackpad-light.png) |
+
+| Notifications | App settings |
+| --- | --- |
+| ![Notifications page](docs/screenshots/notify-light.png) | ![App settings page](docs/screenshots/app-light.png) |
+
+Dark theme: ![Battery page, dark theme](docs/screenshots/battery-dark.png)
+
+## Languages
+
+English, Français, Deutsch, Español, 日本語, 简体中文, Polski, Русский, Português (Brasil) and Afrikaans. The app follows the Windows display language by default. Pick a language under **App settings → Language** (applies after a restart). The installer also follows the Windows language. The translations are machine-written and have not been reviewed by native speakers, so corrections are welcome. The strings are in [`src/Lang`](src/Lang), one JSON file per language.
 
 ## Requirements
 
 - Windows 11, 64-bit. Windows 10 1809 or later can run the app, but the driver's author ships a different package for Windows 10, so check the [driver page](https://github.com/vitoplantamura/MagicTrackpad2ForWindows) first.
-- A Magic Trackpad 2 or the USB-C Magic Trackpad
+- A Magic Trackpad 2 or the USB-C Magic Trackpad (the driver covers the USB-C model, PID 0x0324, over Bluetooth)
 - Battery level is only available over Bluetooth. The driver cannot read it over USB.
 
 ## Install
@@ -40,8 +60,8 @@ Download `MT2FW11-<date>-MSSigned.zip` from the [driver releases](https://github
 You need the .NET 8 SDK (`winget install Microsoft.DotNet.SDK.8`).
 
 ```powershell
-git clone https://github.com/<you>/TrackpadCompanion.git
-cd TrackpadCompanion
+git clone https://github.com/Tri-Lumen/Magic-Trackpad-GUI.git
+cd Magic-Trackpad-GUI
 .\scripts\build-local.ps1
 .\publish\TrackpadCompanion.exe
 ```
