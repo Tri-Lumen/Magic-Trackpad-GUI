@@ -1,0 +1,9 @@
+bin/
+obj/
+publish/
+dist/
+out*/
+.vs/
+*.user
+*.log
+status*.txt
